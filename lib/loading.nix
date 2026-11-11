@@ -71,7 +71,22 @@ rec {
       env:
       evalEnvironment {
         environment = environmentsDir + "/${env}";
-        inherit applicationDirs modules moduleArgs;
+        inherit applicationDirs moduleArgs;
+        modules = modules ++ [
+          # package names and rendered paths use the folder name, while
+          # applications refer to k8s.environment.name
+          (
+            { config, ... }:
+            {
+              assertions = [
+                {
+                  assertion = config.k8s.environment.name == env;
+                  message = "ERROR: k8s.environment.name '${config.k8s.environment.name}' must match its folder name '${env}'";
+                }
+              ];
+            }
+          )
+        ];
       }
     );
 

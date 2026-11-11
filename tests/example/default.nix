@@ -15,7 +15,10 @@ let
 
   env = environments.test;
 
-  packages = k8sLib.mkRenderPackages { inherit pkgs environments; };
+  packages = k8sLib.mkRenderPackages {
+    inherit pkgs environments;
+    manifestsDir = "deploy/rendered";
+  };
 
   failedAssertions = lib.filter (a: !a.assertion) env.assertions;
 in
@@ -24,6 +27,9 @@ assert lib.assertMsg (failedAssertions == [ ]) (
 );
 assert lib.assertMsg (packages ? "render-hello-test") "missing render-hello-test package";
 assert lib.assertMsg (packages ? "render-web-test") "missing render-web-test package";
+assert lib.assertMsg (
+  !(k8sLib.mkRenderPackages { inherit pkgs environments; }) ? "manifests-generate-all"
+) "manifests-generate-all should only exist when manifestsDir is set";
 runCommand "nix-k8s-modules-example" { nativeBuildInputs = [ yq-go ]; } ''
   ${packages.render-all}/bin/render-all > all.yaml
   ${packages.render-hello-test}/bin/render-hello-test > hello.yaml
@@ -75,6 +81,24 @@ runCommand "nix-k8s-modules-example" { nativeBuildInputs = [ yq-go ]; } ''
 
   # nothing nginx specific
   web '[.. | select(tag == "!!str") | select(test("nginx"))] | length' 0
+
+  # rendered manifests tree, matching the per application renderers
+  manifests=${packages.manifests-generate-all}/bin/manifests-generate-all
+  $manifests
+  test "$(cd deploy/rendered && find . -type f | sort | tr '\n' ' ')" \
+    = "./README.md ./test/hello/manifests.yaml ./test/web/manifests.yaml " || {
+    echo "unexpected manifests tree:"; find deploy/rendered; exit 1
+  }
+  cmp hello.yaml deploy/rendered/test/hello/manifests.yaml
+  cmp web.yaml deploy/rendered/test/web/manifests.yaml
+  # stale files are removed when regenerating
+  touch deploy/rendered/test/stale.yaml
+  $manifests
+  test ! -e deploy/rendered/test/stale.yaml
+  # refuses to replace a directory it did not generate
+  rm deploy/rendered/README.md
+  if $manifests; then echo "replaced a foreign directory"; exit 1; fi
+  test -e deploy/rendered/test/hello/manifests.yaml
 
   mkdir $out
   cp all.yaml hello.yaml web.yaml $out/

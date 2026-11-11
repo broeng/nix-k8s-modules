@@ -13,6 +13,8 @@ rec {
       echo "[error] > nix run .#values-generate-all"
       echo "[error] OR"
       echo "[error] > nix run .#crd-schemas-generate-all"
+      echo "[error] OR"
+      echo "[error] > nix run .#manifests-generate-all"
       echo "[error]"
       echo "[error] Review if any changes are relevant, and commit the result."
       exit 1
@@ -40,6 +42,11 @@ rec {
     UNCHANGED=()
     FAILED=()
 
+    # manifests-generate-all only exists when the flake sets manifestsDir
+    has_package() {
+      nix eval --raw ".#$1.name" >/dev/null 2>&1
+    }
+
     revert() {
       $GIT reset --hard HEAD
       # remove any new files generated during the update
@@ -57,6 +64,7 @@ rec {
       if nix flake update "$INPUT" \
         && nix run .#values-generate-all \
         && nix run .#crd-schemas-generate-all \
+        && { ! has_package manifests-generate-all || nix run .#manifests-generate-all; } \
         && nix run .#render-all > "$WORKDIR/updated.yaml"; then
         if ${pkgs.diffutils}/bin/cmp -s "$WORKDIR/baseline.yaml" "$WORKDIR/updated.yaml"; then
           echo "[info] No changes to rendered manifests for $INPUT, reverting"

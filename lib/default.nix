@@ -51,11 +51,17 @@ rec {
       crdsCatalog ? crds-catalog,
       valuesDir ? "docs/generated-values",
       crdSchemasDir ? "docs/generated-crd-schemas",
+      manifestsDir ? null,
     }:
     pkgs.callPackage ./rendering.nix {
       k8slib = mkK8sLib pkgs;
       openapi2jsonschema = mkOpenapi2jsonschema pkgs;
-      inherit crdsCatalog valuesDir crdSchemasDir;
+      inherit
+        crdsCatalog
+        valuesDir
+        crdSchemasDir
+        manifestsDir
+        ;
     };
 
   #
@@ -64,7 +70,7 @@ rec {
   #   render-<app>-<env>, render-dependencies-<app>-<env>,
   #   render-no-deps-<app>-<env>, render-all, values-<chart>-<env>,
   #   values-generate-all, crd-schemas-generate-all, validate-crd,
-  #   make-chart-tree
+  #   make-chart-tree, and manifests-generate-all when manifestsDir is set
   #
   mkRenderPackages =
     args@{ environments, ... }:
@@ -75,6 +81,7 @@ rec {
     // (r.makePackageDependenciesRenderer environments)
     // (r.makePackageOnlyRenderer environments)
     // (r.makeRenderAll environments)
+    // (r.makeManifestsGenerateAll environments)
     // (r.makeChartValuesRenderer environments)
     // (r.makeChartValuesRenderAll environments)
     // (r.makeCRDSchemasAll environments)

@@ -134,12 +134,45 @@ See [tests/example](tests/example) for a complete, minimal setup.
 | `crd-schemas-generate-all` | Generate JSON schemas for all CRDs into `crdSchemasDir` |
 | `validate-crd` | Validate all manifests with kubeconform |
 | `make-chart-tree` | A tree of symlinks to all charts in use, for inspection |
+| `manifests-generate-all` | Write all applications to `manifestsDir`, only when `manifestsDir` is set |
 
 Optional arguments: `crdsCatalog` (defaults to this flake's
 [CRDs-catalog](https://github.com/datreeio/CRDs-catalog) input), `valuesDir`
-(default `docs/generated-values`) and `crdSchemasDir` (default
-`docs/generated-crd-schemas`). The directories are relative to where the
-scripts are run.
+(default `docs/generated-values`), `crdSchemasDir` (default
+`docs/generated-crd-schemas`) and `manifestsDir` (default `null`). The
+directories are relative to where the scripts are run.
+
+### Rendered manifests in the repository
+
+Instead of rendering through a config management plugin, the manifests can be
+committed to the repository and deployed by ArgoCD as plain files. With
+`manifestsDir = "rendered"`, `nix run .#manifests-generate-all` writes:
+
+```
+rendered/
+  README.md
+  <env>/<app>/manifests.yaml
+```
+
+Each environment comes from its own evaluation, so environment specific values
+end up in the right place, and like `render-all` only the applications listed
+in `k8s.environment.applications` are included. The directory is replaced as a
+whole, so applications removed from an environment disappear. The script fails
+if any assertion fails, and refuses to replace an existing directory it did not
+generate. `update-charts` regenerates the directory when the package exists.
+
+An ArgoCD application then points at the directory of its environment:
+
+```nix
+source = {
+  repoURL = "https://git.example.com/k8s.git";
+  path = "rendered/${config.k8s.environment.name}/${app.name}";
+};
+```
+
+`evalEnvironments` asserts that `k8s.environment.name` matches the folder name,
+as package names and paths use the folder name. Run `git-check-changes` after
+`manifests-generate-all` in CI, to catch commits that forgot to regenerate.
 
 ## Development shells
 
