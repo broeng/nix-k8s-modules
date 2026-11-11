@@ -1,0 +1,57 @@
+{
+  "nodes": {
+    "crds-catalog": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1794380404,
+        "narHash": "sha256-+Xv5INRGjZo4k/RoOFUOgl6t0qDCYOKySj/7alq1uAQ=",
+        "owner": "datreeio",
+        "repo": "CRDs-catalog",
+        "rev": "89c736bdde38b5fecd0f8436ec5f3aa3679a3b86",
+        "type": "github"
+      },
+      "original": {
+        "owner": "datreeio",
+        "repo": "CRDs-catalog",
+        "type": "github"
+      }
+    },
+    "nix-kube-generators": {
+      "locked": {
+        "lastModified": 1762437901,
+        "narHash": "sha256-5yuJODagAq+aMXQAT2c0gfXKLqapmA6eUHR33jKNHuU=",
+        "owner": "farcaller",
+        "repo": "nix-kube-generators",
+        "rev": "810dcf792081790648ba9ae705b9a2286115ace8",
+        "type": "github"
+      },
+      "original": {
+        "owner": "farcaller",
+        "repo": "nix-kube-generators",
+        "type": "github"
+      }
+    },
+    "nixpkgs": {
+      "locked": {
+        "lastModified": 1793977579,
+        "narHash": "sha256-4/Yzr1fWTh/zBAR1tR84ZQ1Zhmor8AXwgD4AS7sPn60=",
+        "rev": "4fe25e12eb9f4c744966dd3de5a05246cf098601",
+        "type": "tarball",
+        "url": "https://releases.nixos.org/nixpkgs/nixpkgs-26.11pre1109744.4fe25e12eb9f/nixexprs.tar.zst"
+      },
+      "original": {
+        "type": "tarball",
+        "url": "https://channels.nixos.org/nixpkgs-unstable/nixexprs.tar.zst"
+      }
+    },
+    "root": {
+      "inputs": {
+        "crds-catalog": "crds-catalog",
+        "nix-kube-generators": "nix-kube-generators",
+        "nixpkgs": "nixpkgs"
+      }
+    }
+  },
+  "root": "root",
+  "version": 7
+}
