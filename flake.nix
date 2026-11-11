@@ -44,10 +44,16 @@
           openapi2jsonschema = self.lib.mkOpenapi2jsonschema pkgs;
         }
         // self.lib.mkScripts pkgs
+        // self.lib.mkTools pkgs
       );
+
+      devShells = forAllSystems (pkgs: {
+        default = self.lib.mkDevShell { inherit pkgs; };
+      });
 
       checks = forAllSystems (pkgs: {
         example = pkgs.callPackage ./tests/example { k8sLib = self.lib; };
+        shells = pkgs.callPackage ./tests/shells { k8sLib = self.lib; };
       });
 
       formatter = forAllSystems (pkgs: pkgs.nixfmt-tree);

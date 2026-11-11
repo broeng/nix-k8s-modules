@@ -19,7 +19,12 @@ which is suitable for e.g. an ArgoCD config management plugin.
 | `lib.mkRenderPackages` | Render, values, CRD schema and validation packages for evaluated environments |
 | `lib.mkRendering` | The individual rendering functions used by `mkRenderPackages` |
 | `lib.mkScripts pkgs` | `git-check-changes` and `update-charts` helper scripts |
+| `lib.mkTools pkgs` | `maketemp`, `nix-kube` and `seal-secret` tools |
+| `lib.mkDevShell` | Development shell with the base tools |
+| `lib.mkEnvironmentShells` | A development shell per environment |
 | `packages.<system>.openapi2jsonschema` | Script used for generating JSON schemas from CRDs |
+| `packages.<system>.{maketemp,nix-kube,seal-secret}` | See [Development shells](#development-shells) |
+| `devShells.<system>.default` | Base development shell, for working on this repository |
 
 The modules expect `pkgs` as a module argument. `kubelib` is provided to all
 modules by default (built from `pkgs`), and can be overridden through
@@ -135,6 +140,54 @@ Optional arguments: `crdsCatalog` (defaults to this flake's
 (default `docs/generated-values`) and `crdSchemasDir` (default
 `docs/generated-crd-schemas`). The directories are relative to where the
 scripts are run.
+
+## Development shells
+
+`lib.mkDevShell { pkgs; packages ? [ ]; shellHook ? ""; }` creates a shell
+with the base tools: `jq`, `helm`, `nixfmt-tree`, `openapi2jsonschema`,
+`xurls`, `yaml2nix`, `yq` and the tools below.
+
+`lib.mkEnvironmentShells` creates one shell per evaluated environment, used
+with `nix develop .#<env>`:
+
+```nix
+devShells = k8s-modules.lib.mkEnvironmentShells {
+  inherit pkgs environments inputs;
+  # config for importing the per environment nixpkgs
+  nixpkgsConfig.allowUnfree = true;
+  # extra packages, from the package set of the environment
+  packages = envPkgs: [ envPkgs.talosctl pkgs.argocd ];
+  # extra shell hook, conf is the evaluated environment
+  shellHook = env: conf: ''
+    export KUBECONFIG=$(fetch-kubeconfig ${env} | maketemp)
+    on_exit "echo bye"
+  '';
+};
+```
+
+Each shell has the base tools and `kubectl`, and sets `K8S_ENVIRONMENT` to the
+environment name and `PS1` to a prompt showing it (`prompt = null` to disable).
+
+Tools like `kubectl` can be pinned per environment, to match the version
+running in each cluster. If `inputs` has an input named `nixpkgs-env-<env>`
+(prefix configurable through `envNixpkgsPrefix`), the package set of that
+environment is imported from it, otherwise `pkgs` is used. Pass `envPkgs = env:
+<package set>` to choose differently.
+
+All shells provide:
+
+- `K8S_SHELL_TMPDIR`: a private temporary directory, removed when the shell
+  exits.
+- `on_exit <command>`: run a command when the shell exits. Use this instead of
+  `trap ... EXIT`, which would replace the cleanup.
+
+### Tools
+
+| Tool | Description |
+| --- | --- |
+| `maketemp` | Writes stdin to a new private temporary file and prints its path. Inside the shells, the file is created in `K8S_SHELL_TMPDIR`, so it is removed on exit. |
+| `nix-kube` | Starts a temporary pod running `nix-shell` with the given arguments, in `$NAMESPACE` (default `default`). |
+| `seal-secret` | Creates a SealedSecret from `key=value` pairs and prints it as Nix. Options: `--name` (default `my-secret`), `--namespace`, `--scope` (default `cluster-wide`), `--controller-name` and `--controller-namespace`. The controller can also be set through kubeseal's `SEALED_SECRETS_CONTROLLER_NAME` and `SEALED_SECRETS_CONTROLLER_NAMESPACE` environment variables. |
 
 ## Validation
 

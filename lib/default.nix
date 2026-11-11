@@ -84,4 +84,40 @@ rec {
   # General utility scripts (git-check-changes, update-charts)
   mkScripts = pkgs: (pkgs.callPackage ./scripts.nix { }).all;
 
+  # Tools for working with clusters (maketemp, nix-kube, seal-secret)
+  mkTools = pkgs: {
+    maketemp = pkgs.callPackage ../packages/maketemp { };
+    nix-kube = pkgs.callPackage ../packages/nix-kube { };
+    seal-secret = pkgs.callPackage ../packages/seal-secret { };
+  };
+
+  mkShells =
+    pkgs:
+    pkgs.callPackage ./shells.nix {
+      tools = mkTools pkgs;
+      openapi2jsonschema = mkOpenapi2jsonschema pkgs;
+    };
+
+  #
+  # Development shell with the base tools.
+  #
+  # mkDevShell { inherit pkgs; packages = [ ... ]; shellHook = "..."; }
+  #
+  mkDevShell = args@{ pkgs, ... }: (mkShells pkgs).mkDevShell (removeAttrs args [ "pkgs" ]);
+
+  #
+  # A shell per evaluated environment, see ./shells.nix for arguments.
+  #
+  # devShells = mkEnvironmentShells {
+  #   inherit pkgs environments inputs;
+  #   nixpkgsConfig.allowUnfree = true;
+  #   packages = envPkgs: [ envPkgs.talosctl ];
+  #   shellHook = env: conf: ''
+  #     export KUBECONFIG=$(fetch-kubeconfig ${env} | maketemp)
+  #   '';
+  # };
+  #
+  mkEnvironmentShells =
+    args@{ pkgs, ... }: (mkShells pkgs).mkEnvironmentShells (removeAttrs args [ "pkgs" ]);
+
 }
