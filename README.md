@@ -174,6 +174,9 @@ source = {
 as package names and paths use the folder name. Run `git-check-changes` after
 `manifests-generate-all` in CI, to catch commits that forgot to regenerate.
 
+See [docs/rendered-manifests.md](docs/rendered-manifests.md) for a guide to
+setting this up in a downstream repository, including a bootstrap application.
+
 ## Development shells
 
 `lib.mkDevShell { pkgs; packages ? [ ]; shellHook ? ""; }` creates a shell
