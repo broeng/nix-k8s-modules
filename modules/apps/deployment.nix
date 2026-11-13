@@ -12,6 +12,24 @@ lib.mkOption {
             description = "Embed an annotation containing a hash of the application configuration";
           };
 
+          configurationHashKinds = lib.mkOption {
+            type = lib.types.listOf lib.types.str;
+            default = [
+              "ConfigMap"
+              "SealedSecret"
+            ];
+            example = [
+              "ConfigMap"
+              "SealedSecret"
+              "Secret"
+            ];
+            description = ''
+              Manifest Kind types included in the configuration hash. Changes
+              to resources of these kinds change the hash, which restarts
+              workloads when `embedConfigurationHash` is enabled.
+            '';
+          };
+
           ignoreDifferences = lib.mkOption {
             type = lib.types.listOf lib.types.attrs;
             default = [ ];

@@ -97,10 +97,7 @@ lib.types.submodule [
         configurationResources = lib.mkOption {
           type = lib.types.listOf lib.types.attrs;
           default = lib.filter (
-            m:
-            k8slib.attrs.attrSetContainsAnyOf m [
-              { kind = "ConfigMap"; }
-            ]
+            m: builtins.elem (m.kind or null) config.deployment.configurationHashKinds
           ) config.applicationResources;
           description = "Configuration related resources for this application";
         };

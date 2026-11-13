@@ -238,7 +238,9 @@ OK) which are checked by `render-all`:
 
 ## Configuration hash
 
-When `deployment.embedConfigurationHash` is enabled (the default), a hash of all
-ConfigMaps of an application is added as the annotation
-`<app>.<k8s.annotationDomain>/config-hash` on all resources, and on pod
-templates, so that workloads are restarted when configuration changes.
+When `deployment.embedConfigurationHash` is enabled (the default), a hash of the
+resources of an application whose kind is listed in
+`deployment.configurationHashKinds` (default `ConfigMap` and `SealedSecret`) is
+added as the annotation `<app>.<k8s.annotationDomain>/config-hash` on all
+resources, and on pod templates, so that workloads are restarted when
+configuration changes.

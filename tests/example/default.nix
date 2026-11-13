@@ -25,6 +25,12 @@ in
 assert lib.assertMsg (failedAssertions == [ ]) (
   lib.concatMapStringsSep "\n" (a: a.message) failedAssertions
 );
+assert lib.assertMsg (
+  map (m: m.kind) env.applications.hello.configurationResources == [
+    "ConfigMap"
+    "SealedSecret"
+  ]
+) "config hash should cover ConfigMap and SealedSecret by default";
 assert lib.assertMsg (packages ? "render-hello-test") "missing render-hello-test package";
 assert lib.assertMsg (packages ? "render-web-test") "missing render-web-test package";
 assert lib.assertMsg (

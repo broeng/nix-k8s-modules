@@ -19,6 +19,12 @@
         data.base64 = k8slib.base64.unsafeEncodeBase64 greeter;
       })
       {
+        apiVersion = "bitnami.com/v1alpha1";
+        kind = "SealedSecret";
+        metadata.name = "hello";
+        spec.encryptedData.token = "AgBy3i4OJSWK+PiTySYZZA==";
+      }
+      {
         apiVersion = "apps/v1";
         kind = "Deployment";
         metadata.name = "hello";
